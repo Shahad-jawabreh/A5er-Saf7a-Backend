@@ -20,10 +20,6 @@ const userSchema =new Schema({
     phone : {
         type : String
     },
-    confirmEmail : {
-        type : Boolean,
-        default : false
-    },
     faculty: { type: String }, 
     department: { type: String },
     sendCode : {

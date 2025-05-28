@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import userModel from './auth.model.js'
 import { customAlphabet } from 'nanoid/non-secure'
-
+import sendEmail from './../../utls/sendEmail.js'
 export const login =async (req,res,next)=>{
     const {email , password}=req.body
     const user = await userModel.findOne({email})
@@ -10,9 +10,6 @@ export const login =async (req,res,next)=>{
         const checkPassword =await bcrypt.compare(password, user.password)
         if(!checkPassword) {
             return res.status(400).json({massege :"password mismatch"})
-        }
-        if( !user.confirmEmail ) {
-            return res.json({massege : "you are don't confirm your email"})
         }
         const token = jwt.sign({_id:user._id , email},process.env.secretKeyToken, { expiresIn: '2h' });
         return res.status(200).json({massege : "welcom",token})
@@ -28,9 +25,6 @@ export const signup =async (req,res)=>{
         const hashPassword = await bcrypt.hash(password, parseInt(process.env.SALT))
         const user = await userModel.create({userName, password:hashPassword, email})
         const token = jwt.sign({_id:user._id ,role : user.role ,email},process.env.secretKeyToken, { expiresIn: '2h' });
-        const subject = "confirm email" ;
-        const html = `<a href='${req.protocol}://${req.headers.host}/user/confirmemail/${token}'>confirm email</a>`
-        SendEmail(email,subject,html)
         return res.json({massege : "added successfully",user})
     }
     return res.json({massege : "you are already exist"})
@@ -42,7 +36,7 @@ export const sendCode = async (req,res)=>{
         const nanoid = customAlphabet('1234567890abcdef', 4)()
 
         await userModel.findOneAndUpdate({email},{sendCode :nanoid})
-        SendEmail(email,"send code" , `<h2>${nanoid}</h2>`)
+        sendEmail(email,"send code" , `<h2>${nanoid}</h2>`)
         return res.json({massege : "send successfully"})
     }
     return res.json({massege : "you are not signup"})
